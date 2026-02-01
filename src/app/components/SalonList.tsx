@@ -13,6 +13,10 @@ export function SalonList() {
   );
   const whatsappUrl = `https://wa.me/50762730591?text=${whatsappMessage}`;
   const [searchTerm, setSearchTerm] = useState("");
+  const [leadNombre, setLeadNombre] = useState("");
+  const [leadSalon, setLeadSalon] = useState("");
+  const [leadTelefono, setLeadTelefono] = useState("");
+  const [leadCiudad, setLeadCiudad] = useState("");
   const [filters, setFilters] = useState<FilterState>({
     servicios: [],
     calificacionMin: 0,
@@ -118,6 +122,80 @@ export function SalonList() {
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      <div id="contacto" className="mb-12">
+        <h2 className="mb-2">¿Quieres publicar tu salón?</h2>
+        <p className="text-muted-foreground mb-6">
+          Déjanos tus datos y te contactamos por WhatsApp.
+        </p>
+        <Card className="max-w-2xl">
+          <CardHeader>
+            <CardTitle>Formulario rápido</CardTitle>
+            <CardDescription>Te respondemos en el mismo día.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              className="grid grid-cols-1 md:grid-cols-2 gap-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const msg = [
+                  "Hola, quiero publicar mi salón en Citas Belleza Panamá.",
+                  leadNombre ? `Nombre: ${leadNombre}` : "",
+                  leadSalon ? `Salón: ${leadSalon}` : "",
+                  leadTelefono ? `Teléfono: ${leadTelefono}` : "",
+                  leadCiudad ? `Ciudad: ${leadCiudad}` : ""
+                ]
+                  .filter(Boolean)
+                  .join(" | ");
+                const url = `https://wa.me/50762730591?text=${encodeURIComponent(msg)}`;
+                window.open(url, "_blank");
+              }}
+            >
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="lead-nombre">Nombre</label>
+                <Input
+                  id="lead-nombre"
+                  value={leadNombre}
+                  onChange={(e) => setLeadNombre(e.target.value)}
+                  placeholder="Tu nombre"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="lead-salon">Nombre del salón</label>
+                <Input
+                  id="lead-salon"
+                  value={leadSalon}
+                  onChange={(e) => setLeadSalon(e.target.value)}
+                  placeholder="Ej. Estudio Belleza"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="lead-telefono">Teléfono</label>
+                <Input
+                  id="lead-telefono"
+                  value={leadTelefono}
+                  onChange={(e) => setLeadTelefono(e.target.value)}
+                  placeholder="+507 6000-0000"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="lead-ciudad">Ciudad</label>
+                <Input
+                  id="lead-ciudad"
+                  value={leadCiudad}
+                  onChange={(e) => setLeadCiudad(e.target.value)}
+                  placeholder="Panamá"
+                />
+              </div>
+              <div className="md:col-span-2 pt-2">
+                <Button type="submit" className="w-full">
+                  Enviar por WhatsApp
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="mb-8">
