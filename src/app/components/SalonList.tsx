@@ -1,11 +1,17 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { salones } from "@/data/mockData";
 import { SalonCard } from "./SalonCard";
 import { AdvancedFilters, FilterState } from "./AdvancedFilters";
 import { Input } from "@/app/components/ui/input";
+import { Button } from "@/app/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Search } from "lucide-react";
 
 export function SalonList() {
+  const whatsappMessage = encodeURIComponent(
+    "Hola, quiero publicar mi salón en Citas Belleza Panamá y recibir más reservas."
+  );
+  const whatsappUrl = `https://wa.me/50762730591?text=${whatsappMessage}`;
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<FilterState>({
     servicios: [],
@@ -15,7 +21,7 @@ export function SalonList() {
   });
 
   const filteredSalones = salones.filter(salon => {
-    // B�squeda por texto
+    // Búsqueda por texto
     const matchesSearch = 
       salon.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
       salon.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -25,7 +31,7 @@ export function SalonList() {
     const matchesServicios = filters.servicios.length === 0 ||
       filters.servicios.some(s => salon.servicios.includes(s));
 
-    // Filtro de calificaci�n
+    // Filtro de calificación
     const matchesCalificacion = salon.calificacion >= filters.calificacionMin;
 
     return matchesSearch && matchesServicios && matchesCalificacion;
@@ -33,10 +39,91 @@ export function SalonList() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="mb-2">Encuentra tu Sal�n de Belleza Ideal</h1>
+      <div className="mb-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-6 items-center">
+          <div>
+            <h1 className="mb-3">Citas Belleza Panamá</h1>
+            <p className="text-muted-foreground mb-5">
+              Ayudamos a los salones a llenar su agenda con reservas online, recordatorios y pagos
+              simples por Yappy o efectivo.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button asChild>
+                <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                  Quiero publicar mi salón
+                </a>
+              </Button>
+              <Button variant="outline" asChild>
+                <a href="#planes">Ver planes</a>
+              </Button>
+            </div>
+          </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Reserva en minutos</CardTitle>
+              <CardDescription>
+                Encuentra profesionales, compara servicios y agenda sin llamadas.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              + Menos no-shows · + Clientes · + Control total de citas
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <div id="planes" className="mb-12">
+        <h2 className="mb-2">Planes para salones</h2>
         <p className="text-muted-foreground mb-6">
-          Descubre los mejores salones de belleza y agenda tu cita con profesionales expertos
+          Lanza tu agenda online con todo lo esencial desde el primer día.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Básico</CardTitle>
+              <CardDescription>Ideal para 1 salón pequeño o mediano</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p>• Reservas online 24/7</p>
+              <p>• Panel de citas y clientes</p>
+              <p>• Recordatorios por email</p>
+              <p>• Pago en salón</p>
+              <div className="pt-3">
+                <Button asChild className="w-full">
+                  <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                    Empezar por WhatsApp
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Pro</CardTitle>
+              <CardDescription>Para salones que quieren crecer rápido</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p>• Todo lo del Básico</p>
+              <p>• Confirmación por WhatsApp</p>
+              <p>• Pago con Yappy</p>
+              <p>• Reportes y métricas</p>
+              <div className="pt-3">
+                <Button asChild className="w-full">
+                  <a href={whatsappUrl} target="_blank" rel="noreferrer">
+                    Quiero el plan Pro
+                  </a>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <div className="mb-8">
+        <h2 className="mb-2">Encuentra tu Salón de Belleza Ideal</h2>
+        <p className="text-muted-foreground mb-6">
+          Descubre los mejores salones de belleza y agenda tu cita con profesionales expertos.
         </p>
         
         <div className="flex gap-3 max-w-2xl">
@@ -68,9 +155,19 @@ export function SalonList() {
 
       {filteredSalones.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">No se encontraron salones que coincidan con tu b�squeda</p>
+          <p className="text-muted-foreground">No se encontraron salones que coincidan con tu búsqueda</p>
         </div>
       )}
+
+      <a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="fixed bottom-5 right-5 z-50 rounded-full bg-emerald-500 text-white px-4 py-3 shadow-lg hover:bg-emerald-600"
+        aria-label="WhatsApp"
+      >
+        WhatsApp
+      </a>
     </div>
   );
 }
