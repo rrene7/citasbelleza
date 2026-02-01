@@ -199,7 +199,7 @@ export function SalonList() {
       </div>
 
       <div className="mb-8">
-        <h2 className="mb-2">Encuentra tu Salón de Belleza Ideal</h2>
+        <h2 className="mb-2">Encuentra tu Salon de Belleza Ideal</h2>
         <p className="text-muted-foreground mb-6">
           Descubre los mejores salones de belleza y agenda tu cita con profesionales expertos.
         </p>
