@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/ta
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/app/components/ui/table";
 import { Badge } from "@/app/components/ui/badge";
 import { api, type ApiCita, normalizarSalon } from "@/services/api";
+import { AgendaVisual } from "@/app/components/AgendaVisual";
 import { toast } from "sonner";
 import { Building2, Calendar, Users, DollarSign, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -121,8 +122,9 @@ export function AdminPanel() {
       </div>
 
       <Tabs defaultValue="citas" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="citas">Citas</TabsTrigger>
+          <TabsTrigger value="agenda">Agenda</TabsTrigger>
           <TabsTrigger value="salones">Salones</TabsTrigger>
         </TabsList>
 
@@ -168,6 +170,10 @@ export function AdminPanel() {
               {citasFiltradas.length === 0 && <div className="text-center py-8 text-muted-foreground">No hay citas para mostrar</div>}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="agenda" className="mt-6">
+          <AgendaVisual citas={citas} onCambiarEstado={cambiarEstado} onWhatsApp={enviarWhatsApp} />
         </TabsContent>
 
         <TabsContent value="salones" className="mt-6">
