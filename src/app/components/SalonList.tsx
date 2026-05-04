@@ -1,5 +1,5 @@
-﻿import { useState } from "react";
-import { salones } from "@/data/mockData";
+import { useEffect, useState } from "react";
+import { api, normalizarSalon } from "@/services/api";
 import { SalonCard } from "./SalonCard";
 import { AdvancedFilters, FilterState } from "./AdvancedFilters";
 import { Input } from "@/app/components/ui/input";
@@ -12,6 +12,9 @@ export function SalonList() {
     "Hola, quiero publicar mi salón en Citas Belleza Panamá y recibir más reservas."
   );
   const whatsappUrl = `https://wa.me/50762730591?text=${whatsappMessage}`;
+  const [salones, setSalones] = useState<ReturnType<typeof normalizarSalon>[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [leadNombre, setLeadNombre] = useState("");
   const [leadSalon, setLeadSalon] = useState("");
@@ -24,18 +27,23 @@ export function SalonList() {
     disponibleHoy: false
   });
 
-  const filteredSalones = salones.filter(salon => {
-    // Búsqueda por texto
-    const matchesSearch = 
-      salon.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      salon.descripcion.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      salon.servicios.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()));
+  useEffect(() => {
+    api.salones()
+      .then((data) => setSalones(data.map(normalizarSalon)))
+      .catch((err) => setError(err.message || "No se pudieron cargar los salones"))
+      .finally(() => setLoading(false));
+  }, []);
 
-    // Filtro de servicios
+  const filteredSalones = salones.filter(salon => {
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = 
+      salon.nombre.toLowerCase().includes(term) ||
+      salon.descripcion.toLowerCase().includes(term) ||
+      salon.servicios.some(s => s.toLowerCase().includes(term));
+
     const matchesServicios = filters.servicios.length === 0 ||
       filters.servicios.some(s => salon.servicios.includes(s));
 
-    // Filtro de calificación
     const matchesCalificacion = salon.calificacion >= filters.calificacionMin;
 
     return matchesSearch && matchesServicios && matchesCalificacion;
@@ -154,44 +162,22 @@ export function SalonList() {
             >
               <div className="space-y-2">
                 <label className="text-sm font-medium" htmlFor="lead-nombre">Nombre</label>
-                <Input
-                  id="lead-nombre"
-                  value={leadNombre}
-                  onChange={(e) => setLeadNombre(e.target.value)}
-                  placeholder="Tu nombre"
-                />
+                <Input id="lead-nombre" value={leadNombre} onChange={(e) => setLeadNombre(e.target.value)} placeholder="Tu nombre" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium" htmlFor="lead-salon">Nombre del salón</label>
-                <Input
-                  id="lead-salon"
-                  value={leadSalon}
-                  onChange={(e) => setLeadSalon(e.target.value)}
-                  placeholder="Ej. Estudio Belleza"
-                />
+                <Input id="lead-salon" value={leadSalon} onChange={(e) => setLeadSalon(e.target.value)} placeholder="Ej. Estudio Belleza" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium" htmlFor="lead-telefono">Teléfono</label>
-                <Input
-                  id="lead-telefono"
-                  value={leadTelefono}
-                  onChange={(e) => setLeadTelefono(e.target.value)}
-                  placeholder="+507 6000-0000"
-                />
+                <Input id="lead-telefono" value={leadTelefono} onChange={(e) => setLeadTelefono(e.target.value)} placeholder="+507 6000-0000" />
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium" htmlFor="lead-ciudad">Ciudad</label>
-                <Input
-                  id="lead-ciudad"
-                  value={leadCiudad}
-                  onChange={(e) => setLeadCiudad(e.target.value)}
-                  placeholder="Panamá"
-                />
+                <Input id="lead-ciudad" value={leadCiudad} onChange={(e) => setLeadCiudad(e.target.value)} placeholder="Panamá" />
               </div>
               <div className="md:col-span-2 pt-2">
-                <Button type="submit" className="w-full">
-                  Enviar por WhatsApp
-                </Button>
+                <Button type="submit" className="w-full">Enviar por WhatsApp</Button>
               </div>
             </form>
           </CardContent>
@@ -218,6 +204,9 @@ export function SalonList() {
           <AdvancedFilters onFilterChange={setFilters} />
         </div>
 
+        {loading && <div className="mt-4 text-sm text-muted-foreground">Cargando salones...</div>}
+        {error && <div className="mt-4 text-sm text-destructive">{error}</div>}
+
         {(filters.servicios.length > 0 || filters.calificacionMin > 0 || filters.precioMax < 200) && (
           <div className="mt-4 text-sm text-muted-foreground">
             Mostrando {filteredSalones.length} resultado{filteredSalones.length !== 1 ? 's' : ''}
@@ -231,7 +220,7 @@ export function SalonList() {
         ))}
       </div>
 
-      {filteredSalones.length === 0 && (
+      {!loading && filteredSalones.length === 0 && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No se encontraron salones que coincidan con tu búsqueda</p>
         </div>
