@@ -68,6 +68,23 @@ export function AdminPanel() {
         if (!r.ok || data.error) throw new Error(data.error || "Error");
       });
       toast.success("Estado actualizado");
+
+      await fetch("http://localhost/citasbelleza/api/notificaciones/whatsapp.php", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cita_id: id, estado })
+      })
+        .then(async (r) => {
+          const data = await r.json();
+          if (data.url) {
+            window.open(data.url, "_blank");
+          }
+        })
+        .catch(() => {
+          console.warn("No se pudo preparar la notificacion de WhatsApp");
+        });
+
       cargarDatos();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "No se pudo actualizar");
