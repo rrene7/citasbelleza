@@ -93,7 +93,11 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ email, password })
     }),
+
+  logout: () => request<{ ok: true }>('/auth/logout.php'),
+
   me: () => request<ApiUsuario>('/auth/me.php'),
+
   salones: () => request<ApiSalon[]>('/salones/'),
   servicios: (salonId?: number) => request<ApiServicio[]>(salonId ? `/servicios/?salon_id=${salonId}` : '/servicios/'),
   trabajadores: (salonId?: number) => request<ApiTrabajador[]>(salonId ? `/trabajadores/?salon_id=${salonId}` : '/trabajadores/'),
