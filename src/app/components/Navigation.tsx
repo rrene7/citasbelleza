@@ -19,26 +19,14 @@ export function Navigation() {
           </div>
 
           <div className="flex items-center gap-4">
-            <Button
-              variant={location.pathname === "/" ? "default" : "ghost"}
-              onClick={() => navigate("/")}
-            >
-              Explorar Salones
+            <Button variant={location.pathname === "/" ? "default" : "ghost"} onClick={() => navigate("/")}>Explorar Salones</Button>
+            <Button variant={location.pathname === "/mis-citas" ? "default" : "ghost"} onClick={() => navigate("/mis-citas")}>
+              <Calendar className="w-4 h-4 mr-2" />Mis Citas
             </Button>
-            <Button
-              variant={location.pathname === "/mis-citas" ? "default" : "ghost"}
-              onClick={() => navigate("/mis-citas")}
-            >
-              <Calendar className="w-4 h-4 mr-2" />
-              Mis Citas
+            <Button variant={location.pathname === "/admin" ? "default" : "ghost"} onClick={() => navigate("/admin")}>
+              <Settings className="w-4 h-4 mr-2" />Admin
             </Button>
-            <Button
-              variant={location.pathname === "/admin" ? "default" : "ghost"}
-              onClick={() => navigate("/admin")}
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Administracion
-            </Button>
+            <Button variant={location.pathname === "/login" ? "default" : "ghost"} onClick={() => navigate("/login")}>Login</Button>
           </div>
         </div>
       </div>
