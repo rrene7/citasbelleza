@@ -2,6 +2,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost/citasbell
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...(options.headers || {})
@@ -17,6 +18,13 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   return data as T;
 }
+
+export type ApiUsuario = {
+  id: number;
+  nombre: string;
+  email: string;
+  rol?: string;
+};
 
 export type ApiSalon = {
   id: number;
@@ -80,6 +88,12 @@ export type CrearCitaPayload = {
 };
 
 export const api = {
+  login: (email: string, password: string) =>
+    request<{ ok: true; usuario: ApiUsuario }>('/auth/login.php', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    }),
+  me: () => request<ApiUsuario>('/auth/me.php'),
   salones: () => request<ApiSalon[]>('/salones/'),
   servicios: (salonId?: number) => request<ApiServicio[]>(salonId ? `/servicios/?salon_id=${salonId}` : '/servicios/'),
   trabajadores: (salonId?: number) => request<ApiTrabajador[]>(salonId ? `/trabajadores/?salon_id=${salonId}` : '/trabajadores/'),
