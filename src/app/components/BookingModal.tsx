@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/app/components/ui/dialog";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/app/components/ui/textarea";
 import { Calendar } from "@/app/components/ui/calendar";
 import { Salon, Trabajador } from "@/types";
-import { servicios, agregarCita, generarHorariosDisponibles } from "@/data/mockData";
+import { api, normalizarServicio, type ApiServicio } from "@/services/api";
 import { paymentConfig } from "@/data/paymentConfig";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -29,20 +29,49 @@ export function BookingModal({ isOpen, onClose, salon, trabajador }: BookingModa
   const [clienteTelefono, setClienteTelefono] = useState("");
   const [notas, setNotas] = useState("");
   const [metodoPago, setMetodoPago] = useState<string>("yappy");
+  const [serviciosSalon, setServiciosSalon] = useState<ReturnType<typeof normalizarServicio>[]>([]);
+  const [horariosDisponibles, setHorariosDisponibles] = useState<string[]>([]);
+  const [guardando, setGuardando] = useState(false);
 
-  const servicioSeleccionado = servicios.find(s => s.id === Number(selectedService));
-  
-  const horariosDisponibles = selectedDate && servicioSeleccionado
-    ? generarHorariosDisponibles(
-        trabajador.id,
-        format(selectedDate, 'yyyy-MM-dd'),
-        salon.horarioApertura,
-        salon.horarioCierre,
-        servicioSeleccionado.duracion
-      )
-    : [];
+  const servicioSeleccionado = serviciosSalon.find(s => s.id === Number(selectedService));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!isOpen) return;
+
+    api.servicios(salon.id)
+      .then((data: ApiServicio[]) => setServiciosSalon(data.map(normalizarServicio)))
+      .catch(() => toast.error("No se pudieron cargar los servicios"));
+  }, [isOpen, salon.id]);
+
+  useEffect(() => {
+    setSelectedTime("");
+
+    if (!selectedDate) {
+      setHorariosDisponibles([]);
+      return;
+    }
+
+    api.disponibilidad(trabajador.id, format(selectedDate, "yyyy-MM-dd"))
+      .then(setHorariosDisponibles)
+      .catch(() => {
+        setHorariosDisponibles([]);
+        toast.error("No se pudo consultar la disponibilidad");
+      });
+  }, [selectedDate, trabajador.id]);
+
+  const resetForm = () => {
+    setSelectedDate(undefined);
+    setSelectedService("");
+    setSelectedTime("");
+    setClienteNombre("");
+    setClienteEmail("");
+    setClienteTelefono("");
+    setNotas("");
+    setMetodoPago("yappy");
+    setHorariosDisponibles([]);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!selectedDate || !selectedService || !selectedTime || !clienteNombre || !clienteEmail || !clienteTelefono) {
@@ -50,42 +79,35 @@ export function BookingModal({ isOpen, onClose, salon, trabajador }: BookingModa
       return;
     }
 
-    const metodoPagoTexto = metodoPago === "yappy" ? "Yappy" : "Efectivo en salón";
+    const metodoPagoTexto = metodoPago === "yappy" ? "Yappy" : "Efectivo en salon";
     const notasFinales = notas
-      ? `${notas}\nMétodo de pago: ${metodoPagoTexto}`
-      : `Método de pago: ${metodoPagoTexto}`;
+      ? `${notas}\nMetodo de pago: ${metodoPagoTexto}`
+      : `Metodo de pago: ${metodoPagoTexto}`;
 
     try {
-      const nuevaCita = agregarCita({
-        clienteNombre,
-        clienteEmail,
-        clienteTelefono,
-        salonId: salon.id,
-        trabajadorId: trabajador.id,
-        servicioId: Number(selectedService),
-        fecha: format(selectedDate, 'yyyy-MM-dd'),
+      setGuardando(true);
+      await api.crearCita({
+        cliente_nombre: clienteNombre,
+        cliente_email: clienteEmail,
+        cliente_telefono: clienteTelefono,
+        salon_id: salon.id,
+        trabajador_id: trabajador.id,
+        servicio_id: Number(selectedService),
+        fecha: format(selectedDate, "yyyy-MM-dd"),
         hora: selectedTime,
-        estado: 'pendiente',
         notas: notasFinales
       });
 
-      toast.success("¡Cita agendada exitosamente!", {
-        description: `Tu cita con ${trabajador.nombre} ha sido confirmada para el ${format(selectedDate, "d 'de' MMMM, yyyy", { locale: es })} a las ${selectedTime}. Pago: ${metodoPagoTexto}`
+      toast.success("Cita agendada exitosamente", {
+        description: `Tu cita con ${trabajador.nombre} fue registrada para el ${format(selectedDate, "d 'de' MMMM, yyyy", { locale: es })} a las ${selectedTime}. Pago: ${metodoPagoTexto}`
       });
 
-      // Resetear formulario
-      setSelectedDate(undefined);
-      setSelectedService("");
-      setSelectedTime("");
-      setClienteNombre("");
-      setClienteEmail("");
-      setClienteTelefono("");
-      setNotas("");
-      setMetodoPago("yappy");
-      
+      resetForm();
       onClose();
     } catch (error) {
-      toast.error("Error al agendar la cita. Por favor intenta nuevamente.");
+      toast.error(error instanceof Error ? error.message : "Error al agendar la cita");
+    } finally {
+      setGuardando(false);
     }
   };
 
@@ -109,7 +131,7 @@ export function BookingModal({ isOpen, onClose, salon, trabajador }: BookingModa
                     <SelectValue placeholder="Selecciona un servicio" />
                   </SelectTrigger>
                   <SelectContent>
-                    {servicios.map((servicio) => (
+                    {serviciosSalon.map((servicio) => (
                       <SelectItem key={servicio.id} value={String(servicio.id)}>
                         {servicio.nombre} - ${servicio.precio} ({servicio.duracion} min)
                       </SelectItem>
@@ -124,7 +146,7 @@ export function BookingModal({ isOpen, onClose, salon, trabajador }: BookingModa
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
-                  disabled={(date) => date < new Date() || date < new Date(new Date().setHours(0, 0, 0, 0))}
+                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                   className="rounded-md border"
                   locale={es}
                 />
@@ -139,24 +161,26 @@ export function BookingModal({ isOpen, onClose, salon, trabajador }: BookingModa
                     </SelectTrigger>
                     <SelectContent>
                       {horariosDisponibles.map((hora) => (
-                        <SelectItem key={hora} value={hora}>
-                          {hora}
-                        </SelectItem>
+                        <SelectItem key={hora} value={hora}>{hora}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               )}
 
+              {selectedDate && horariosDisponibles.length === 0 && (
+                <p className="text-sm text-muted-foreground">No hay horarios disponibles para esta fecha.</p>
+              )}
+
               <div>
-                <Label htmlFor="metodo-pago">Método de pago *</Label>
+                <Label htmlFor="metodo-pago">Metodo de pago *</Label>
                 <Select value={metodoPago} onValueChange={setMetodoPago}>
                   <SelectTrigger id="metodo-pago">
-                    <SelectValue placeholder="Selecciona un método" />
+                    <SelectValue placeholder="Selecciona un metodo" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="yappy">Yappy</SelectItem>
-                    <SelectItem value="efectivo">Efectivo en salón</SelectItem>
+                    <SelectItem value="efectivo">Efectivo en salon</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -166,19 +190,15 @@ export function BookingModal({ isOpen, onClose, salon, trabajador }: BookingModa
                   <p className="font-medium mb-1">Pago con Yappy</p>
                   {paymentConfig.yappyLink ? (
                     <p className="text-muted-foreground">
-                      Paga aquí:{" "}
+                      Paga aqui:{" "}
                       <a className="underline" href={paymentConfig.yappyLink} target="_blank" rel="noreferrer">
                         {paymentConfig.yappyLink}
                       </a>
                     </p>
                   ) : (
-                    <p className="text-muted-foreground">
-                      Solicita el link o paga al número Yappy del salón.
-                    </p>
+                    <p className="text-muted-foreground">Solicita el link o paga al numero Yappy del salon.</p>
                   )}
-                  {paymentConfig.yappyPhone && (
-                    <p className="text-muted-foreground">Yappy: {paymentConfig.yappyPhone}</p>
-                  )}
+                  {paymentConfig.yappyPhone && <p className="text-muted-foreground">Yappy: {paymentConfig.yappyPhone}</p>}
                 </div>
               )}
             </div>
@@ -186,49 +206,22 @@ export function BookingModal({ isOpen, onClose, salon, trabajador }: BookingModa
             <div className="space-y-4">
               <div>
                 <Label htmlFor="nombre">Nombre completo *</Label>
-                <Input
-                  id="nombre"
-                  type="text"
-                  value={clienteNombre}
-                  onChange={(e) => setClienteNombre(e.target.value)}
-                  placeholder="Juan Pérez"
-                  required
-                />
+                <Input id="nombre" type="text" value={clienteNombre} onChange={(e) => setClienteNombre(e.target.value)} placeholder="Juan Perez" required />
               </div>
 
               <div>
                 <Label htmlFor="email">Email *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={clienteEmail}
-                  onChange={(e) => setClienteEmail(e.target.value)}
-                  placeholder="juan@ejemplo.com"
-                  required
-                />
+                <Input id="email" type="email" value={clienteEmail} onChange={(e) => setClienteEmail(e.target.value)} placeholder="juan@ejemplo.com" required />
               </div>
 
               <div>
-                <Label htmlFor="telefono">Teléfono *</Label>
-                <Input
-                  id="telefono"
-                  type="tel"
-                  value={clienteTelefono}
-                  onChange={(e) => setClienteTelefono(e.target.value)}
-                  placeholder="+1 555-1234"
-                  required
-                />
+                <Label htmlFor="telefono">Telefono *</Label>
+                <Input id="telefono" type="tel" value={clienteTelefono} onChange={(e) => setClienteTelefono(e.target.value)} placeholder="+507 6000-0000" required />
               </div>
 
               <div>
                 <Label htmlFor="notas">Notas adicionales</Label>
-                <Textarea
-                  id="notas"
-                  value={notas}
-                  onChange={(e) => setNotas(e.target.value)}
-                  placeholder="Comentarios o preferencias especiales..."
-                  rows={4}
-                />
+                <Textarea id="notas" value={notas} onChange={(e) => setNotas(e.target.value)} placeholder="Comentarios o preferencias especiales..." rows={4} />
               </div>
             </div>
           </div>
@@ -239,7 +232,7 @@ export function BookingModal({ isOpen, onClose, salon, trabajador }: BookingModa
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <p className="text-muted-foreground">Servicio:</p>
                 <p className="font-medium">{servicioSeleccionado.nombre}</p>
-                <p className="text-muted-foreground">Duración:</p>
+                <p className="text-muted-foreground">Duracion:</p>
                 <p className="font-medium">{servicioSeleccionado.duracion} minutos</p>
                 <p className="text-muted-foreground">Precio:</p>
                 <p className="font-medium">${servicioSeleccionado.precio}</p>
@@ -250,12 +243,8 @@ export function BookingModal({ isOpen, onClose, salon, trabajador }: BookingModa
           )}
 
           <div className="flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancelar
-            </Button>
-            <Button type="submit">
-              Confirmar Cita
-            </Button>
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" disabled={guardando}>{guardando ? "Guardando..." : "Confirmar Cita"}</Button>
           </div>
         </form>
       </DialogContent>
