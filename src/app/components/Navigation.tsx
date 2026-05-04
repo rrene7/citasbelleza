@@ -37,7 +37,7 @@ export function Navigation() {
               onClick={() => navigate("/admin")}
             >
               <Settings className="w-4 h-4 mr-2" />
-              Administración
+              Administracion
             </Button>
           </div>
         </div>
