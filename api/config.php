@@ -35,6 +35,26 @@ function require_login(): void
     }
 }
 
+function require_admin(): void
+{
+    require_login();
+    if (($_SESSION['usuario']['rol'] ?? '') !== 'admin') {
+        http_response_code(403);
+        echo json_encode(['error' => 'Acceso solo para administradores']);
+        exit;
+    }
+}
+
+function require_salon(): void
+{
+    require_login();
+    if (($_SESSION['usuario']['rol'] ?? '') !== 'salon' || empty($_SESSION['usuario']['salon_id'])) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Acceso solo para salones']);
+        exit;
+    }
+}
+
 function current_user(): ?array
 {
     return $_SESSION['usuario'] ?? null;
