@@ -18,8 +18,13 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await api.login(email, password);
-      navigate("/admin");
+      const res = await api.login(email, password);
+
+      if (res.usuario?.rol === "salon") {
+        navigate("/salon-admin");
+      } else {
+        navigate("/admin");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo iniciar sesion");
     } finally {
