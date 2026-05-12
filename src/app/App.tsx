@@ -5,6 +5,8 @@ import { SalonList } from "@/app/components/SalonList";
 import { SalonDetails } from "@/app/components/SalonDetails";
 import { AdminPanel } from "@/app/components/AdminPanel";
 import { MisCitas } from "@/app/components/MisCitas";
+import Login from "@/app/pages/Login";
+import InscribirSalon from "@/app/pages/InscribirSalon";
 
 export default function App() {
   return (
@@ -16,6 +18,8 @@ export default function App() {
           <Route path="/salon/:id" element={<SalonDetails />} />
           <Route path="/mis-citas" element={<MisCitas />} />
           <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/inscribir-salon" element={<InscribirSalon />} />
         </Routes>
         <Toaster />
       </div>

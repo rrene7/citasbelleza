@@ -1,0 +1,15 @@
+USE citasbelleza;
+
+ALTER TABLE usuarios
+  ADD COLUMN IF NOT EXISTS salon_id INT NULL AFTER rol;
+
+ALTER TABLE usuarios
+  ADD CONSTRAINT fk_usuarios_salon FOREIGN KEY (salon_id) REFERENCES salones(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS uploads_info (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  tipo VARCHAR(50) NOT NULL,
+  entidad_id INT NOT NULL,
+  ruta VARCHAR(500) NOT NULL,
+  creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
