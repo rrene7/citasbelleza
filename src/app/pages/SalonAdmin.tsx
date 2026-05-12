@@ -8,12 +8,16 @@ export default function SalonAdmin() {
   const [perfil, setPerfil] = useState<any>(null);
   const [form, setForm] = useState<any>({});
   const [foto, setFoto] = useState<File | null>(null);
+  const [dashboard, setDashboard] = useState<any>(null);
 
   const cargarDatos = async () => {
     const perfilRes = await fetch("http://localhost/citasbelleza/api/salon-admin/perfil.php", { credentials: "include" });
     const data = await perfilRes.json();
     setPerfil(data);
     setForm(data);
+
+    const dashRes = await fetch("http://localhost/citasbelleza/api/salon-admin/dashboard.php", { credentials: "include" });
+    setDashboard(await dashRes.json());
   };
 
   useEffect(() => {
@@ -48,6 +52,15 @@ export default function SalonAdmin() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="mb-6">Panel del Salon</h1>
+
+      {dashboard && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card><CardContent className="p-4">Total citas: {dashboard.total_citas}</CardContent></Card>
+          <Card><CardContent className="p-4">Hoy: {dashboard.citas_hoy}</CardContent></Card>
+          <Card><CardContent className="p-4">Clientes: {dashboard.clientes}</CardContent></Card>
+          <Card><CardContent className="p-4">Ingresos: ${dashboard.ingresos}</CardContent></Card>
+        </div>
+      )}
 
       <Tabs defaultValue="perfil">
         <TabsList>
